@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>📚 Library Manager – Quản Lý Thư Viện</title>
+  <meta name="description" content="Hệ thống quản lý thư viện: sách, người mượn, lịch sử mượn trả"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/css/style.css"/>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon">📚</span>
+      <div>
+        <div class="logo-text">LibraryManager</div>
+        <div class="logo-sub">Quản Lý Thư Viện</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Tổng Quan</div>
+      <div class="nav-item active" data-tab="dashboard">
+        <span class="icon">🏠</span><span>Dashboard</span>
+      </div>
+      <div class="nav-section">Quản Lý</div>
+      <div class="nav-item" data-tab="books">
+        <span class="icon">📖</span><span>Danh Sách Sách</span>
+      </div>
+      <div class="nav-item" data-tab="borrowers">
+        <span class="icon">👥</span><span>Người Mượn</span>
+      </div>
+      <div class="nav-item" data-tab="borrows">
+        <span class="icon">🔄</span><span>Mượn / Trả Sách</span>
+      </div>
+      <div class="nav-section">Báo Cáo</div>
+      <div class="nav-item" data-tab="overdue">
+        <span class="icon">⚠️</span><span>Sách Quá Hạn</span>
+        <span class="nav-badge" id="overdue-badge" style="display:none">0</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">Library Manager v1.0</div>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <main class="main">
+    <!-- Topbar -->
+    <div class="topbar">
+      <h1 id="page-title">📊 Dashboard</h1>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="global-search" placeholder="Tìm kiếm nhanh..." autocomplete="off"/>
+      </div>
+      <button class="btn btn-primary" id="topbar-btn" style="display:none">+ Thêm</button>
+    </div>
+
+    <div class="content">
+
+      <!-- Dashboard -->
+      <div id="tab-dashboard" class="tab-panel active">
+        <div class="stats-grid">
+          <div class="stat-card blue">
+            <div class="stat-icon">📚</div>
+            <div class="stat-num" id="s-books">–</div>
+            <div class="stat-label">Tổng Đầu Sách</div>
+            <div class="stat-sub" id="s-books-avail">–</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-icon">👥</div>
+            <div class="stat-num" id="s-borrowers">–</div>
+            <div class="stat-label">Thành Viên</div>
+            <div class="stat-sub">Đang hoạt động</div>
+          </div>
+          <div class="stat-card warn">
+            <div class="stat-icon">🔄</div>
+            <div class="stat-num" id="s-active">–</div>
+            <div class="stat-label">Đang Mượn</div>
+            <div class="stat-sub">Chưa trả</div>
+          </div>
+          <div class="stat-card red">
+            <div class="stat-icon">⚠️</div>
+            <div class="stat-num" id="s-overdue">–</div>
+            <div class="stat-label">Quá Hạn</div>
+            <div class="stat-sub">Cần xử lý gấp</div>
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🕐 Mượn Gần Đây</div>
+            </div>
+            <div class="card-body table-wrap">
+              <table>
+                <thead><tr><th>Sách</th><th>Người Mượn</th><th>Hạn Trả</th><th>Trạng Thái</th></tr></thead>
+                <tbody id="db-recent"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">⭐ Sách Ít Sẵn Nhất</div>
+            </div>
+            <div class="card-body table-wrap">
+              <table>
+                <thead><tr><th>Tên Sách</th><th>Còn Lại</th><th>Tổng</th></tr></thead>
+                <tbody id="db-books-low"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Books -->
+      <div id="tab-books" class="tab-panel">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📖 Danh Sách Sách <span id="book-count" class="count-tag"></span></div>
+            <button class="btn btn-primary" id="btn-add-book">+ Thêm Sách</button>
+          </div>
+          <div class="card-body table-wrap">
+            <table>
+              <thead><tr><th>#</th><th>Tên Sách</th><th>Tác Giả</th><th>ISBN</th><th>Năm</th><th>Còn Lại / Tổng</th><th>Trạng Thái</th><th>Thao Tác</th></tr></thead>
+              <tbody id="books-table"></tbody>
+            </table>
+            <!-- Pagination -->
+            <div class="pagination-controls" id="books-pagination"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Borrowers -->
+      <div id="tab-borrowers" class="tab-panel">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">👥 Danh Sách Thành Viên <span id="borrower-count" class="count-tag"></span></div>
+            <button class="btn btn-primary" id="btn-add-borrower">+ Thêm Thành Viên</button>
+          </div>
+          <div class="card-body table-wrap">
+            <table>
+              <thead><tr><th>#</th><th>Họ Tên</th><th>Email</th><th>SĐT</th><th>Ngày Tham Gia</th><th>Trạng Thái</th><th>Thao Tác</th></tr></thead>
+              <tbody id="borrowers-table"></tbody>
+            </table>
+            <!-- Pagination -->
+            <div class="pagination-controls" id="borrowers-pagination"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Borrows -->
+      <div id="tab-borrows" class="tab-panel">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🔄 Lịch Sử Mượn / Trả Sách</div>
+            <button class="btn btn-success" id="btn-borrow">📤 Mượn Sách Mới</button>
+          </div>
+          <div class="card-body table-wrap">
+            <table>
+              <thead><tr><th>#</th><th>Sách</th><th>Người Mượn</th><th>Ngày Mượn</th><th>Hạn Trả</th><th>Ngày Trả</th><th>Trạng Thái</th><th>Thao Tác</th></tr></thead>
+              <tbody id="borrows-table"></tbody>
+            </table>
+            <!-- Pagination -->
+            <div class="pagination-controls" id="borrows-pagination"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overdue -->
+      <div id="tab-overdue" class="tab-panel">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⚠️ Sách Quá Hạn Chưa Trả</div>
+          </div>
+          <div class="card-body table-wrap">
+            <table>
+              <thead><tr><th>#</th><th>Sách</th><th>Người Mượn</th><th>Ngày Mượn</th><th>Hạn Trả</th><th>Số Ngày Trễ</th><th>Ghi Chú</th><th>Thao Tác</th></tr></thead>
+              <tbody id="overdue-table"></tbody>
+            </table>
+            <!-- Pagination -->
+            <div class="pagination-controls" id="overdue-pagination"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- .content -->
+  </main>
+</div><!-- .layout -->
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- Modal Sách -->
+<div class="overlay" id="modal-book">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-book-title">📖 Thêm Sách Mới</div>
+      <button class="modal-close" data-close="modal-book">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="book-id"/>
+      <div class="form-group"><label>Tên Sách *</label><input id="book-title" placeholder="Nhập tên sách..."/></div>
+      <div class="form-row">
+        <div class="form-group"><label>Tác Giả *</label><input id="book-author" placeholder="Tên tác giả..."/></div>
+        <div class="form-group"><label>ISBN</label><input id="book-isbn" placeholder="978-..."/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Số Lượng *</label><input type="number" id="book-qty" min="1" value="1"/></div>
+        <div class="form-group"><label>Năm Xuất Bản</label><input type="number" id="book-year" placeholder="2024"/></div>
+      </div>
+      <div class="form-group"><label>Mô Tả</label><textarea id="book-desc" placeholder="Mô tả ngắn về sách..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-close="modal-book">Hủy</button>
+      <button class="btn btn-primary" id="btn-save-book">💾 Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Thành Viên -->
+<div class="overlay" id="modal-borrower">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-borrower-title">👤 Thêm Thành Viên</div>
+      <button class="modal-close" data-close="modal-borrower">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="borrower-id"/>
+      <div class="form-group"><label>Họ và Tên *</label><input id="borrower-name" placeholder="Nguyễn Văn A..."/></div>
+      <div class="form-row">
+        <div class="form-group"><label>Email</label><input type="email" id="borrower-email" placeholder="email@example.com"/></div>
+        <div class="form-group"><label>Số Điện Thoại</label><input id="borrower-phone" placeholder="09xxxxxxxx"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Ngày Sinh</label><input type="date" id="borrower-dob"/></div>
+        <div class="form-group"></div>
+      </div>
+      <div class="form-group"><label>Địa Chỉ</label><textarea id="borrower-addr" placeholder="Số nhà, đường, quận..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-close="modal-borrower">Hủy</button>
+      <button class="btn btn-primary" id="btn-save-borrower">💾 Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Mượn Sách -->
+<div class="overlay" id="modal-borrow">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📤 Mượn Sách</div>
+      <button class="modal-close" data-close="modal-borrow">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Chọn Sách *</label>
+        <select id="borrow-book"><option value="">-- Chọn sách --</option></select>
+      </div>
+      <div class="form-group">
+        <label>Chọn Người Mượn *</label>
+        <select id="borrow-borrower"><option value="">-- Chọn thành viên --</option></select>
+      </div>
+      <div class="form-group">
+        <label>Ngày Hết Hạn *</label>
+        <input type="date" id="borrow-due"/>
+      </div>
+      <div class="form-group"><label>Ghi Chú</label><textarea id="borrow-notes" placeholder="Ghi chú..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-close="modal-borrow">Hủy</button>
+      <button class="btn btn-success" id="btn-submit-borrow">📤 Xác Nhận Mượn</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Trả Sách -->
+<div class="overlay" id="modal-return">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📥 Xác Nhận Trả Sách</div>
+      <button class="modal-close" data-close="modal-return">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="return-info" class="info-box"></div>
+      <div class="form-group"><label>Ghi Chú Trả</label><textarea id="return-notes" placeholder="Tình trạng sách khi trả..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-close="modal-return">Hủy</button>
+      <button class="btn btn-success" id="btn-submit-return">✅ Xác Nhận Trả</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Xác Nhận Xóa -->
+<div class="overlay" id="modal-confirm">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <div class="modal-title">🗑️ Xác Nhận Xóa</div>
+      <button class="modal-close" data-close="modal-confirm">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="confirm-message" style="font-size:14px;line-height:1.6;color:var(--text)"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-close="modal-confirm">Hủy</button>
+      <button class="btn btn-danger" id="btn-confirm-ok">🗑️ Xóa</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<!-- Scripts — thứ tự quan trọng -->
+<script src="/js/api.js"></script>
+<script src="/js/dashboard.js"></script>
+<script src="/js/books.js"></script>
+<script src="/js/borrowers.js"></script>
+<script src="/js/borrows.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>
